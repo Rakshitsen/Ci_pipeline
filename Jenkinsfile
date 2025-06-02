@@ -43,7 +43,7 @@ pipeline {
 
         stage('Trigger Deploy Pipeline') {
             steps {
-                build job: 'Cd_pipeline',
+                build job: 'CD_PIPELINE',
                       parameters: [string(name: 'BUILD_TAG', value: "${BUILD_NUMBER}")],
                       wait: false
             }
