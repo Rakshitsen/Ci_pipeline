@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+   agent { label 'KMaster' }
 
     stages {
         stage('Cloning the Repo') {
