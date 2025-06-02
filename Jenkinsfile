@@ -16,12 +16,14 @@ pipeline {
             }
         }
 
-        // Removed the commented-out stage with incorrect brackets
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-cred', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                     sh "docker push rakshitsen/central-image:${BUILD_NUMBER}"
+                    // Optional: Push 'latest' tag
+                    // sh "docker tag rakshitsen/central-image:${BUILD_NUMBER} rakshitsen/central-image:latest"
+                    // sh "docker push rakshitsen/central-image:latest"
                     sh "docker logout"
                 }
             }
@@ -37,6 +39,22 @@ pipeline {
                 '''
                 sh "docker run -d -p 85:80 --name central-container-${BUILD_NUMBER} rakshitsen/central-image:${BUILD_NUMBER}"
             }
+        }
+
+        stage('Trigger Deploy Pipeline') {
+            steps {
+                build job: 'Cd_pipeline',
+                      parameters: [string(name: 'BUILD_TAG', value: "${BUILD_NUMBER}")],
+                      wait: false
+            }
+        }
+    }
+
+    post {
+        always {
+            sh '''
+            docker rm -f central-container-${BUILD_NUMBER} || true
+            '''
         }
     }
 }
